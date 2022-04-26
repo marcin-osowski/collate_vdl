@@ -6,11 +6,11 @@
 import collections
 import dateutil.parser
 import flask
+import sys
 import threading
 import time
 import re
 
-LOG_FILE = "vdl2.log"
 hex_to_messages = None  # will be written later
 app = flask.Flask(__name__)
 
@@ -110,8 +110,13 @@ def root():
   return "number of messages: %d" % hex_to_messages.num_messages
 
 if __name__ == "__main__":
+  if len(sys.argv) != 2:
+    print("Please pass the log file")
+    sys.exit(1)
+  log_file = sys.argv[1]
+
   hex_to_messages = HexToMessages()
-  reader = Reader(LOG_FILE, hex_to_messages)
+  reader = Reader(log_file, hex_to_messages)
   reader.start_thread()
   # Starts the web server
-  app.run()
+  app.run(host="0.0.0.0")
