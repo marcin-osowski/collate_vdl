@@ -5,10 +5,32 @@
 
 import collections
 import dateutil.parser
+import flask
+import threading
 import time
 import re
 
-LOG_FILE="vdl2.log"
+LOG_FILE = "vdl2.log"
+hex_to_messages = None  # will be written later
+app = flask.Flask(__name__)
+
+
+class HexToMessages:
+  def __init__(self):
+    self.map = collections.defaultdict(lambda: [])
+    self.num_messages = 0
+
+  def add_message(self, message):
+    valid_message = False
+    if message.from_hex:
+      self.map[message.from_hex].append(message)
+      valid_message = True
+    if message.to_hex:
+      self.map[message.to_hex].append(message)
+      valid_message = True
+    if valid_message:
+      self.num_messages += 1
+
 
 class Message:
   def __init__(self, raw):
@@ -45,53 +67,51 @@ class Message:
         self.to_type = matched.group(4)
 
 
-class HexToMessages:
-  def __init__(self):
-    self.map = collections.defaultdict(lambda: [])
-    self.num_messages = 0
+class Reader:
 
-  def add_message(self, message):
-    valid_message = False
-    if message.from_hex:
-      self.map[message.from_hex].append(message)
-      valid_message = True
-    if message.to_hex:
-      self.map[message.to_hex].append(message)
-      valid_message = True
-    if valid_message:
-      self.num_messages += 1
+  def __init__(self, log_filename, hex_to_messages):
+    self.log_filename = log_filename
+    self.hex_to_messages = hex_to_messages
+ 
+  def start_thread(self):
+    self.reader_thread = threading.Thread(target=self._data_reader_thread)
+    self.reader_thread.daemon = True
+    self.reader_thread.start()
 
+  def _data_reader_thread(self):
+    with open(self.log_filename, "r") as f:
+      for message in self._tail_messages(f):
+        self.hex_to_messages.add_message(message)
 
-def tail_lines(f):
-  lastpos = 0
-  while True:
-    line = f.readline()
-    newpos = f.tell()
-    if lastpos != newpos:
-      yield line
-    else:
-      time.sleep(0.1)
-    lastpos = newpos
+  def _tail_lines(self, f):
+    lastpos = 0
+    while True:
+      line = f.readline()
+      newpos = f.tell()
+      if lastpos != newpos:
+        yield line
+      else:
+        time.sleep(0.1)
+      lastpos = newpos
 
-
-def tail_messages(f):
-  message_buffer = []
-  for line in tail_lines(f):
-    if line == "\n":
-      if message_buffer:
-        yield Message(message_buffer)
-        message_buffer = []
-    else:
-      message_buffer.append(line.rstrip("\n"))
+  def _tail_messages(self, f):
+    message_buffer = []
+    for line in self._tail_lines(f):
+      if line == "\n":
+        if message_buffer:
+          yield Message(message_buffer)
+          message_buffer = []
+      else:
+        message_buffer.append(line.rstrip("\n"))
 
 
-def data_reader(log_filename, hex_to_messages):
-  with open(log_filename, "r") as f:
-    for message in tail_messages(f):
-      hex_to_messages.add_message(message)
-      print("Loaded %d messages" % hex_to_messages.num_messages)
-
+@app.route("/")
+def root():
+  return "number of messages: %d" % hex_to_messages.num_messages
 
 if __name__ == "__main__":
   hex_to_messages = HexToMessages()
-  data_reader(LOG_FILE, hex_to_messages)
+  reader = Reader(LOG_FILE, hex_to_messages)
+  reader.start_thread()
+  # Starts the web server
+  app.run()
