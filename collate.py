@@ -19,14 +19,18 @@ class HexToMessages:
   def __init__(self):
     self.map = collections.defaultdict(lambda: [])
     self.num_messages = 0
+    self.from_type_messages = collections.defaultdict(lambda: 0)
+    self.to_type_messages = collections.defaultdict(lambda: 0)
 
   def add_message(self, message):
     valid_message = False
     if message.from_hex:
       self.map[message.from_hex].append(message)
+      self.from_type_messages[message.from_type] += 1
       valid_message = True
     if message.to_hex:
       self.map[message.to_hex].append(message)
+      self.to_type_messages[message.to_type] += 1
       valid_message = True
     if valid_message:
       self.num_messages += 1
@@ -107,7 +111,19 @@ class Reader:
 
 @app.route("/")
 def root():
-  return "number of messages: %d" % hex_to_messages.num_messages
+  hexes = dict()
+  for hex_code, messages in hex_to_messages.map.items():
+    if not messages:
+      continue
+    hexes[hex_code] = len(messages)
+
+  return flask.render_template(
+    "index.html",
+    hexes=hexes,
+    num_messages=hex_to_messages.num_messages,
+    from_type_messages=hex_to_messages.from_type_messages,
+  )
+
 
 if __name__ == "__main__":
   if len(sys.argv) != 2:
@@ -119,4 +135,4 @@ if __name__ == "__main__":
   reader = Reader(log_file, hex_to_messages)
   reader.start_thread()
   # Starts the web server
-  app.run(host="0.0.0.0")
+  app.run(host="0.0.0.0", debug=True)

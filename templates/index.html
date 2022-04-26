@@ -1,0 +1,34 @@
+<style>
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+</style>
+
+<h2>Stats</h2>
+
+<p>
+  Received {{ num_messages }} messages:
+  <ul>
+  {% for type, count in from_type_messages.items() %}
+    <li> {{ count }} from {{ type }}
+  {% endfor %}
+  </ul>
+</p>
+
+<h2>Details</h2>
+
+<table>
+  <tr>
+    <th>Hex</th>
+    <th>Msgs</th>
+  <tr>
+
+  {% for hex_code, messages in hexes.items() %}
+  <tr>
+    <td><a href="https://globe.adsbexchange.com/?icao={{ hex_code }}" target="_blank">
+      {{ hex_code }}</a></td>
+    <td>{{ messages }}</td>
+  </tr>
+  {% endfor %}
+</table>
