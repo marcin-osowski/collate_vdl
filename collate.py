@@ -48,12 +48,18 @@ class Message:
 class HexToMessages:
   def __init__(self):
     self.map = collections.defaultdict(lambda: [])
+    self.num_messages = 0
 
   def add_message(self, message):
+    valid_message = False
     if message.from_hex:
       self.map[message.from_hex].append(message)
+      valid_message = True
     if message.to_hex:
       self.map[message.to_hex].append(message)
+      valid_message = True
+    if valid_message:
+      self.num_messages += 1
 
 
 def tail_lines(f):
@@ -83,6 +89,7 @@ def data_reader(log_filename, hex_to_messages):
   with open(log_filename, "r") as f:
     for message in tail_messages(f):
       hex_to_messages.add_message(message)
+      print("Loaded %d messages" % hex_to_messages.num_messages)
 
 
 if __name__ == "__main__":
