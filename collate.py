@@ -141,7 +141,6 @@ def root():
   sorted_stats_map = sorted(
     hex_to_messages.hex_stats_map.items(),
     key=lambda kv: kv[1].last,
-    reverse=True,
   )
 
   return flask.render_template(
