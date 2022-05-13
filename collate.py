@@ -4,6 +4,7 @@
 """
 
 import collections
+import datetime
 import dateutil.parser
 import flask
 import sys
@@ -49,9 +50,6 @@ class Message:
 
   def __repr__(self):
     return "%s (%s) -> %s (%s)" % (self.from_hex, self.from_type, self.to_hex, self.to_type)
-
-  def __str__(self):
-    return "\n".join(raw)
 
   def _parse_acquisition(self):
     self.timestamp = None
@@ -143,7 +141,7 @@ def root():
   sorted_stats_map = sorted(
     hex_to_messages.hex_stats_map.items(),
     key=lambda kv: kv[1].last,
-    reverse=True
+    reverse=True,
   )
 
   return flask.render_template(
@@ -151,6 +149,16 @@ def root():
     num_messages=hex_to_messages.num_messages,
     from_type_messages=hex_to_messages.from_type_messages,
     sorted_stats_map=sorted_stats_map,
+    now=datetime.datetime.now(datetime.timezone.utc),
+  )
+
+
+@app.route("/hex/<hex_name>")
+def hex(hex_name):
+  return flask.render_template(
+    "hex.html",
+    hex_name=hex_name,
+    messages=hex_to_messages.map[hex_name],
   )
 
 
@@ -165,3 +173,4 @@ if __name__ == "__main__":
   reader.start_thread()
   # Starts the web server
   app.run(host="0.0.0.0", debug=True)
+

@@ -23,8 +23,7 @@ table, th, td {
     <th>Hex</th>
     <th>Received</th>
     <th>Transmitted</th>
-    <th>Last seen</th>
-    <th>ADSB</th>
+    <th colspan=2>Last seen</th>
   <tr>
 
   {% for hex_code, hex_stats in sorted_stats_map %}
@@ -33,11 +32,7 @@ table, th, td {
     <td>{{ hex_stats.num_rx }}</td>
     <td>{{ hex_stats.num_tx }}</td>
     <td>{{ hex_stats.last }}</td>
-    <td>
-      <a href="https://globe.adsbexchange.com/?icao={{ hex_code }}" target="_blank">
-        adsbx
-      </a>
-    </td>
+    <td>{{ "%.1f min ago" % ((now - hex_stats.last).total_seconds() / 60.0) }}</td>
   </tr>
   {% endfor %}
 </table>

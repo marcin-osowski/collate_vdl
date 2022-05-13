@@ -1,0 +1,19 @@
+<h2>Hex: {{ hex_name }}</h2>
+<a href="/">back</a>
+<br>
+<br>
+
+<iframe
+  src="https://globe.adsbexchange.com/?icao={{ hex_name }}&hideSideBar&enableLabels"
+  height="100%"
+  width="49%"
+  style="position: fixed; right: 0px; top:0px;">
+</iframe>
+
+<div style="max-width: 49%">
+  {% for message in messages %}
+    <pre style="white-space: pre-wrap;">{{ "\n".join(message.raw) }}</pre>
+    <br>
+    <br>
+  {% endfor %}
+</div>
