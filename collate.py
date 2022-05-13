@@ -90,6 +90,8 @@ class HexStats:
 
   @property
   def last(self):
+    if self.last_rx is None and self.last_tx is None:
+      return datetime.datetime.min
     if self.last_rx is None:
       return self.last_tx
     if self.last_tx is None:
