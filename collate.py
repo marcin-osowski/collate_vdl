@@ -141,6 +141,7 @@ def root():
   sorted_stats_map = sorted(
     hex_to_messages.hex_stats_map.items(),
     key=lambda kv: kv[1].last,
+    reverse=True,
   )
 
   return flask.render_template(
@@ -154,10 +155,17 @@ def root():
 
 @app.route("/hex/<hex_name>")
 def hex(hex_name):
+  # Sort the messages, last message on top.
+  sorted_messages = sorted(
+    hex_to_messages.map[hex_name],
+    key=lambda message: message.timestamp,
+    reverse=True,
+  )
+
   return flask.render_template(
     "hex.html",
     hex_name=hex_name,
-    messages=hex_to_messages.map[hex_name],
+    messages=sorted_messages,
   )
 
 
