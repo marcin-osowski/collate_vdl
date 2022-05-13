@@ -21,16 +21,21 @@ class HexToMessages:
     self.num_messages = 0
     self.from_type_messages = collections.defaultdict(lambda: 0)
     self.to_type_messages = collections.defaultdict(lambda: 0)
+    self.hex_stats_map = collections.defaultdict(lambda: HexStats())
 
   def add_message(self, message):
     valid_message = False
     if message.from_hex:
       self.map[message.from_hex].append(message)
       self.from_type_messages[message.from_type] += 1
+      self.hex_stats_map[message.from_hex].num_tx += 1
+      self.hex_stats_map[message.from_hex].last_tx = message.timestamp
       valid_message = True
     if message.to_hex:
       self.map[message.to_hex].append(message)
       self.to_type_messages[message.to_type] += 1
+      self.hex_stats_map[message.to_hex].num_rx += 1
+      self.hex_stats_map[message.to_hex].last_rx = message.timestamp
       valid_message = True
     if valid_message:
       self.num_messages += 1
@@ -69,6 +74,29 @@ class Message:
         self.from_type = matched.group(2)
         self.to_hex = matched.group(3)
         self.to_type = matched.group(4)
+
+
+class HexStats:
+
+  def __init__(self):
+    self.num_rx = 0
+    self.last_rx = None
+    self.num_tx = 0
+    self.last_tx = None
+
+  def __repr__(self):
+    return "RX:%d, last:%s; TX:%d, last:%s" % (
+      self.num_rx, self.last_rx,
+      self.num_tx, self.last_tx
+    )
+
+  @property
+  def last(self):
+    if self.last_rx is None:
+      return self.last_tx
+    if self.last_tx is None:
+      return self.last_rx
+    return max(self.last_tx, self.last_rx)
 
 
 class Reader:
@@ -111,17 +139,18 @@ class Reader:
 
 @app.route("/")
 def root():
-  hexes = dict()
-  for hex_code, messages in hex_to_messages.map.items():
-    if not messages:
-      continue
-    hexes[hex_code] = len(messages)
+  # Sort hexes by last seen, latest on top
+  sorted_stats_map = sorted(
+    hex_to_messages.hex_stats_map.items(),
+    key=lambda kv: kv[1].last,
+    reverse=True
+  )
 
   return flask.render_template(
     "index.html",
-    hexes=hexes,
     num_messages=hex_to_messages.num_messages,
     from_type_messages=hex_to_messages.from_type_messages,
+    sorted_stats_map=sorted_stats_map,
   )
 
 

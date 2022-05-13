@@ -21,14 +21,23 @@ table, th, td {
 <table>
   <tr>
     <th>Hex</th>
-    <th>Msgs</th>
+    <th>Received</th>
+    <th>Transmitted</th>
+    <th>Last seen</th>
+    <th>ADSB</th>
   <tr>
 
-  {% for hex_code, messages in hexes.items() %}
+  {% for hex_code, hex_stats in sorted_stats_map %}
   <tr>
-    <td><a href="https://globe.adsbexchange.com/?icao={{ hex_code }}" target="_blank">
-      {{ hex_code }}</a></td>
-    <td>{{ messages }}</td>
+    <td><a href="/hex/{{ hex_code }}">{{ hex_code }}</a></td>
+    <td>{{ hex_stats.num_rx }}</td>
+    <td>{{ hex_stats.num_tx }}</td>
+    <td>{{ hex_stats.last }}</td>
+    <td>
+      <a href="https://globe.adsbexchange.com/?icao={{ hex_code }}" target="_blank">
+        adsbx
+      </a>
+    </td>
   </tr>
   {% endfor %}
 </table>
